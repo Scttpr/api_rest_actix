@@ -1,5 +1,5 @@
 use actix_web::{HttpResponse};
-use crate::utils::crud;
+use log::{info, warn, error};
 
 pub fn create_handler() -> HttpResponse {
     HttpResponse::Ok().body("Create")
@@ -10,6 +10,9 @@ pub fn delete_handler() -> HttpResponse {
 }
 
 pub fn get_handler() -> HttpResponse {
+    info!("info");
+    warn!("warn");
+    error!("error");
     HttpResponse::Ok().body("Get")
 }
 
