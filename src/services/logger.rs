@@ -1,39 +1,46 @@
-pub const LOG_LEVEL_INFO: &str = "info";
-pub const LOG_LEVEL_WARN: &str = "warn";
-pub const LOG_LEVEL_ERROR: &str = "error";
+use log::{debug, error, info, trace, warn, LevelFilter, SetLoggerError};
+use log4rs::{
+    append::{
+        console::{ConsoleAppender, Target},
+        file::FileAppender,
+    },
+    config::{Appender, Config, Root},
+    encode::pattern::PatternEncoder,
+    filter::threshold::ThresholdFilter,
+};
 
-#[macro_export]
-macro_rules! log {
-    ($level:expr => $content:expr) => {
-        use log::{info, warn, error};
-        use std::fs::{OpenOptions, File, create_dir_all};
-        use std::io::{Write, Error};
+use crate::services::env;
+use crate::utils::constants::LOG_PATH;
 
-        use crate::services::env;
-        use crate::utils::constants::{LOG_PATH, APP_ENV};
-        use crate::services::logger::{LOG_LEVEL_WARN, LOG_LEVEL_ERROR};
+pub fn init() -> Result<(), SetLoggerError> {
+    const STDERR: &str = "stderr";
+    const LOGFILE: &str = "logfile";
 
-        match $level {
-            LOG_LEVEL_WARN => warn!("{}", $content),
-            LOG_LEVEL_ERROR => error!("{}", $content),
-            _ => info!("{}", $content)
-        }
+    let file_path = format!("{}/api.log", env::get_var(LOG_PATH));
 
-        if env::get_var(APP_ENV) != "prod" {
-            let log_content: String = format!("{}\n", $content);
-            let log_dir: String = env::get_var(LOG_PATH);
-            let log_path: String = format!("{}/api.log", log_dir);
+    let stderr = ConsoleAppender::builder().target(Target::Stderr).build();
 
-            create_dir_all(log_dir)?;
+    let logfile = FileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{l} - {m}\n")))
+        .build(file_path)
+        .unwrap();
 
-             let mut log_file: File = OpenOptions::new()
-                .append(true)
-                .create(true)
-                .open(log_path)?;
+    let config = Config::builder()
+        .appender(Appender::builder().build(LOGFILE, Box::new(logfile)))
+        .appender(
+            Appender::builder()
+                .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
+                .build(STDERR, Box::new(stderr)),
+        )
+        .build(
+            Root::builder()
+                .appender(LOGFILE)
+                .appender(STDERR)
+                .build(LevelFilter::Trace),
+        )
+        .unwrap();
 
-            log_file.write_all(log_content.as_bytes())?;
-        }
-    };
+    let _handle = log4rs::init_config(config)?;
+
+    Ok(())
 }
-
-
