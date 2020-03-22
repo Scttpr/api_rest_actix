@@ -1,5 +1,5 @@
-use actix_web::{HttpResponse};
-use log::{info, warn, error};
+use actix_web::{HttpResponse, HttpRequest};
+use log;
 
 pub fn create_handler() -> HttpResponse {
     HttpResponse::Ok().body("Create")
@@ -9,10 +9,8 @@ pub fn delete_handler() -> HttpResponse {
     HttpResponse::Ok().body("Delete")
 }
 
-pub fn get_handler() -> HttpResponse {
-    info!("info");
-    warn!("warn");
-    error!("error");
+pub fn get_handler(req: HttpRequest) -> HttpResponse {
+    log::info!("From get handler");
     HttpResponse::Ok().body("Get")
 }
 

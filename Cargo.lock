@@ -326,6 +326,7 @@ dependencies = [
  "actix-http 2.0.0-alpha.2",
  "actix-rt",
  "actix-web",
+ "chrono",
  "dotenv",
  "failure",
  "log",
